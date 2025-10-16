@@ -1,0 +1,92 @@
+[
+    {
+        "key": "temperature",
+        "label": "Temp",
+        "unit": "°C",
+        "icon": "Thermometer",
+        "kind": "number",
+        "min": 35,
+        "max": 95,
+        "normal": [
+            40,
+            80
+        ]
+    },
+    {
+        "key": "humidity",
+        "label": "Humidity",
+        "unit": "%",
+        "icon": "Droplets",
+        "kind": "number",
+        "min": 10,
+        "max": 95,
+        "normal": [
+            20,
+            70
+        ]
+    },
+    {
+        "key": "vibration",
+        "label": "Vibration",
+        "unit": "mm/s",
+        "icon": "Waves",
+        "kind": "number",
+        "min": 0,
+        "max": 25,
+        "normal": [
+            0,
+            8
+        ]
+    },
+    {
+        "key": "oil",
+        "label": "Oil Level",
+        "unit": "%",
+        "icon": "Activity",
+        "kind": "number",
+        "min": 40,
+        "max": 100,
+        "normal": [
+            60,
+            100
+        ]
+    },
+    {
+        "key": "voltage",
+        "label": "Voltage",
+        "unit": "V",
+        "icon": "Zap",
+        "kind": "number",
+        "min": 180,
+        "max": 260,
+        "normal": [
+            210,
+            240
+        ]
+    },
+    {
+        "key": "current",
+        "label": "Current",
+        "unit": "A",
+        "icon": "Zap",
+        "kind": "number",
+        "min": 0,
+        "max": 250,
+        "normal": [
+            5,
+            120
+        ]
+    },
+    {
+        "key": "door",
+        "label": "Door",
+        "icon": "BellRing",
+        "kind": "boolean"
+    },
+    {
+        "key": "intruder",
+        "label": "PIR Motion",
+        "icon": "ShieldAlert",
+        "kind": "boolean"
+    }
+]

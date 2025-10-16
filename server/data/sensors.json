@@ -1,0 +1,26 @@
+[
+    {
+        "name": "DHT22",
+        "desc": "Temperature and humidity sensor for ambient monitoring."
+    },
+    {
+        "name": "Oil Level Sensor",
+        "desc": "Measures transformer oil level to ensure cooling efficiency."
+    },
+    {
+        "name": "Current & Voltage Sensor",
+        "desc": "Monitors load and supply quality."
+    },
+    {
+        "name": "Vibration Sensor",
+        "desc": "Detects abnormal vibrations indicating faults or tampering."
+    },
+    {
+        "name": "Reed Switch",
+        "desc": "Door open/close detection for enclosures."
+    },
+    {
+        "name": "PIR Motion Sensor",
+        "desc": "Intruder motion detection near equipment."
+    }
+]
