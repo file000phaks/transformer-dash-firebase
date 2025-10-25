@@ -10,12 +10,13 @@ import { toast } from "sonner";
 import { SensorMetric } from "@/types/SensorMetric";
 import { useSensors } from "@/hooks/useSensors";
 import useTransformers from "@/hooks/useTransformers";
+import SensorTrends from "@/components/site/SensorTrends";
 
 export default function TransformerDetails() {
 
   const { id } = useParams();
 
-  const { sensorSchema, sensorData } = useSensors();
+  const { sensorSchema, sensorData, history } = useSensors();
   const { transformer, transformers, getTransformerById } = useTransformers( 1 );
 
   useEffect( () => {
@@ -113,6 +114,18 @@ export default function TransformerDetails() {
             className="h-64"
           />
         </div>
+
+        <aside className="grid gap-3">
+          <div className="rounded-xl border bg-card p-6 shadow-sm mt-6">
+            <p className="text-sm font-semibold">Status</p>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Operating Normally
+            </p>
+
+          </div>
+        </aside>
+
         <h2 className="mt-6 text-lg font-semibold">Live Telemetry</h2>
 
         {
@@ -121,10 +134,10 @@ export default function TransformerDetails() {
               <MetricsGrid
                 className="mt-3"
                 // onAlert={handleAlert}
-                onAlert={() => {}}
+                onAlert={() => { }}
                 schema={sensorSchema}
                 metrics={sensorData}
-                
+
               />
             )
             :
@@ -133,17 +146,12 @@ export default function TransformerDetails() {
             )
         }
 
+        {
+          <SensorTrends />
+        }
+
       </div>
-      <aside className="grid gap-3">
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-sm font-semibold">Status</p>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Operating Normally
-          </p>
-
-        </div>
-      </aside>
     </main>
 
   );
