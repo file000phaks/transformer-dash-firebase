@@ -1,15 +1,12 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutGrid,
-  MapPinned,
-  Waves,
   Bell,
   ChevronLeft,
   ChevronRight,
   X,
+  Zap,
 } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
-import NotificationBell from "./NotificationBell";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -19,32 +16,58 @@ type Props = {
   setMobileOpen: ( v: boolean ) => void;
 };
 
+// Transformers is the primary landing route (see "Multi-Transformer Platform
+// Restructure" in Questions.md) — Sensors/Map remain reachable by direct URL
+// but are left out of the nav, same as before.
+const NAV_ITEMS = [
+  { to: "/", label: "Transformers", Icon: LayoutGrid },
+  { to: "/alerts", label: "Alerts", Icon: Bell },
+];
+
 function NavItem( {
   to,
   label,
   Icon,
   collapsed,
+  onNavigate,
 }: {
   to: string;
   label: string;
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   collapsed: boolean;
+  onNavigate?: () => void;
 } ) {
   return (
     <NavLink
       to={to}
       end
+      onClick={onNavigate}
       className={( { isActive } ) =>
         cn(
-          "flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-          isActive && "bg-accent text-accent-foreground",
+          "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+          isActive && "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary",
           collapsed && "justify-center",
         )
       }
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4 shrink-0" />
       {!collapsed && <span className="truncate">{label}</span>}
     </NavLink>
+  );
+}
+
+function Brand( { collapsed }: { collapsed?: boolean } ) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+        <Zap className="h-4 w-4" />
+      </div>
+      {!collapsed && (
+        <span className="truncate text-sm font-semibold tracking-tight">
+          NUST Transformer Guard
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -61,77 +84,27 @@ export default function Sidebar( {
 
       <aside
         className={cn(
-          "sticky top-0 hidden h-[100dvh] shrink-0 border-r bg-sidebar p-4 md:block",
+          "sticky top-0 hidden h-[100dvh] shrink-0 border-r bg-sidebar p-4 md:flex md:flex-col",
           collapsed ? "w-16" : "w-64",
         )}
       >
 
-        <div
-          className={cn(
-            "flex items-center",
-            collapsed ? "justify-center" : "justify-between",
-          )}
-        >
-          <div className="flex items-center gap-2">
-
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-cyan-500" />
-
-            {!collapsed && (
-              <span className="text-sm font-semibold">Transformer Guard</span>
-            )}
-
-          </div>
-
-          <div className="flex items-center gap-1">
-            {!collapsed && <NotificationBell />}
-            {!collapsed && <ThemeToggle />}
-          </div>
-
+        <div className={cn( "flex items-center", collapsed && "justify-center" )}>
+          <Brand collapsed={collapsed} />
         </div>
 
         <nav className="mt-6 grid gap-1">
-
-          <NavItem
-            to="/dashboard"
-            label="Dashboard"
-            Icon={LayoutGrid}
-            collapsed={collapsed}
-          />
-
-          <NavItem
-            to="/transformers"
-            label="Transformers"
-            Icon={MapPinned}
-            collapsed={collapsed}
-          />
-
-          {/* <NavItem
-            to="/alerts"
-            label="Alerts"
-            Icon={Bell}
-            collapsed={collapsed}
-          /> */}
-
-          <NavItem
-            to="/sensors"
-            label="Sensors"
-            Icon={Waves}
-            collapsed={collapsed}
-          />
+          {NAV_ITEMS.map( ( item ) => (
+            <NavItem key={item.to} {...item} collapsed={collapsed} />
+          ) )}
         </nav>
 
-        <div
-          className={cn(
-            "absolute bottom-4 left-0 right-0 px-4",
-            collapsed && "px-2",
-          )}
-        >
+        <div className="mt-auto pt-4">
           <button
             aria-label="Toggle sidebar"
             onClick={() => setCollapsed( !collapsed )}
             className={cn(
-              "flex w-full items-center justify-center gap-2 rounded-md border bg-background py-2 text-sm hover:bg-accent",
-              collapsed && "px-0",
+              "flex w-full items-center justify-center gap-2 rounded-md border bg-background py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
             {collapsed ? (
@@ -145,67 +118,43 @@ export default function Sidebar( {
       </aside>
 
       {/* Mobile drawer */}
-      
+
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          className="fixed inset-0 z-40 bg-foreground/40 md:hidden"
           onClick={() => setMobileOpen( false )}
         />
       )}
-      
+
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-sidebar p-4 transition-transform md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-sidebar p-4 transition-transform md:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
         role="dialog"
         aria-modal="true"
       >
-     
+
         <div className="flex items-center justify-between">
-     
-          <div className="flex items-center gap-2">
-     
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-cyan-500" />
-            <span className="text-sm font-semibold">Transformer Guard</span>
-     
-          </div>
-     
-          <div className="flex items-center gap-2">
-     
-            <ThemeToggle />
-            <button
-              aria-label="Close sidebar"
-              onClick={() => setMobileOpen( false )}
-              className="rounded-md p-1 hover:bg-accent"
-            >
-              <X className="h-4 w-4" />
-            </button>
-     
-          </div>
-     
+          <Brand />
+          <button
+            aria-label="Close sidebar"
+            onClick={() => setMobileOpen( false )}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-     
-        <nav className="mt-6 grid gap-1" onClick={() => setMobileOpen( false )}>
-          <NavItem
-            to="/dashboard"
-            label="Dashboard"
-            Icon={LayoutGrid}
-            collapsed={false}
-          />
-          <NavItem
-            to="/transformers"
-            label="Transformers"
-            Icon={MapPinned}
-            collapsed={false}
-          />
-          <NavItem to="/alerts" label="Alerts" Icon={Bell} collapsed={false} />
-          <NavItem
-            to="/sensors"
-            label="Sensors"
-            Icon={Waves}
-            collapsed={false}
-          />
+
+        <nav className="mt-6 grid gap-1">
+          {NAV_ITEMS.map( ( item ) => (
+            <NavItem
+              key={item.to}
+              {...item}
+              collapsed={false}
+              onNavigate={() => setMobileOpen( false )}
+            />
+          ) )}
         </nav>
       </aside>
     </>

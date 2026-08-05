@@ -1,183 +1,139 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useSensors } from "@/hooks/useSensors";
+import MetricsGrid from "@/components/site/MetricsGrid";
+import HealthScore from "@/components/site/HealthScore";
+import SensorTrends from "@/components/site/SensorTrends";
+import Map from "@/components/site/Map";
+import DebugPanel from "@/components/site/DebugPanel";
 import { useNotifications } from "@/state/notifications";
-import { loadTransformers } from "@/lib/storage";
-import { Transformer } from "@/types/transformer";
-import { useNavigate } from "react-router-dom";
-import useTransformers from "@/hooks/useTransformers";
+import { computeHealthScore } from "@/lib/status";
+import { generateWeeklyReport } from "@/lib/pdfReport";
+import { formatShortAge } from "@/lib/time";
 
-export default function Dashboard() {
+const TRANSFORMER_NAME = "NUST Model Transformer Unit";
+const TRANSFORMER_COORDS = { lat: -20.1645216, lng: 28.6409461 };
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-  const { alerts } = useNotifications();
+/** Forces a re-render every `intervalMs` so time-relative text (e.g. "synced Xs ago") stays live. */
+function useTicker(intervalMs = 1000) {
+  const [, setTick] = useState(0);
 
-  const { transformers } = useTransformers();
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+}
 
-  const navigate = useNavigate();
+function LivePill({ ts }: { ts: number | undefined }) {
+  useTicker(1000);
 
-  const summary = useMemo(
-    () => ( {
-      transformers: transformers.length,
-      alerts: alerts.length,
-    } ),
-    [ transformers.length, alerts.length ],
-  );
+  const label = ts ? formatShortAge(ts) : "connecting…";
 
   return (
-
-    <main className="container mx-auto grid gap-6 py-6 xl:grid-cols-2">
-
-      <section className="xl:col-span-3 grid grid-cols-2 gap-3 md:grid-cols-2">
-
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Transformers</p>
-          <p className="mt-1 text-2xl font-semibold">{summary.transformers}</p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Alerts</p>
-          <p className="mt-1 text-2xl font-semibold">{summary.alerts}</p>
-        </div>
-
-        {/* <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Coverage</p>
-          <p className="mt-1 text-2xl font-semibold">12 km</p>
-        </div>
-   
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Nodes/Gateway</p>
-          <p className="mt-1 text-2xl font-semibold">1,000+</p>
-        </div> */}
-
-      </section>
-
-      {/* Dashboard Transformer List */}
-
-      <section className="xl:col-span-2">
-
-        <div className="rounded-xl border bg-card">
-
-          <div className="border-b p-3 text-sm font-medium">Transformers</div>
-          <div className="max-h-80 overflow-auto p-2">
-
-            {
-              transformers.length === 0 ?
-                (
-                  <p className="p-2 text-sm text-muted-foreground">
-                    No transformers registered. Use the Transformers page to add
-                    one.
-                  </p>
-                ) : (
-
-                  <ul className="grid gap-1">
-
-                    {
-
-                      transformers.map( ( t ) => (
-
-                        <li key={t.id}>
-
-                          <button
-                            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
-                            onClick={() => navigate( `/transformers/${t.id}` )}
-                          >
-
-                            <span className="truncate">{t.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {t.lat.toFixed( 3 )}, {t.lng.toFixed( 3 )}
-                            </span>
-
-                          </button>
-
-                        </li>
-
-                      ) )
-                    }
-
-                  </ul>
-
-                )}
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* Important Alerts */}
-
-      {/* <section className="xl:col-span-2">
-
-        <div className="rounded-xl border bg-card">
-
-          <div className="border-b p-3 text-sm font-medium">
-            Important Alerts
-          </div>
-
-          <div className="max-h-64 overflow-auto p-2">
-
-            {
-              alerts.length === 0 ? (
-                <p className="p-2 text-sm text-muted-foreground">
-                  No alerts yet.
-                </p>
-              ) : (
-                <ul className="divide-y">
-
-                  {
-                    alerts.slice( 0, 5 ).map( ( a ) => (
-                      <li
-                        key={a.id}
-                        className="flex items-center justify-between px-3 py-2 text-sm"
-                      >
-                        <div>
-
-                          <button
-                            className="font-medium underline"
-                            onClick={() => navigate( `/alerts/${a.id}` )}
-                          >
-                            {a.label}
-                          </button>
-
-                          <p className="text-xs text-muted-foreground">
-
-                            {a.transformerName ? (
-                              <button
-                                className="underline"
-                                onClick={() =>
-                                  navigate( `/transformers/${a.transformerId}` )
-                                }
-                              >
-                                {a.transformerName}
-                              </button>
-                            ) : null}
-                            {a.transformerName ? " • " : ""}
-
-                            {new Date( a.ts ).toLocaleTimeString()}
-                          </p>
-
-                        </div>
-
-                        <span
-                          className={`rounded-full px-2 py-1 text-xs ${a.severity === "crit" ? "bg-red-500/10 text-red-600" : "bg-amber-500/10 text-amber-600"}`}
-                        >
-                          {a.severity}
-                        </span>
-
-                      </li>
-                    ) )}
-
-                </ul>
-
-              )}
-
-          </div>
-
-        </div>
-
-      </section> */}
-
-    </main>
-
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-normal/10 px-2.5 py-1 text-xs font-medium text-status-normal ring-1 ring-inset ring-status-normal/30">
+      <span className="h-1.5 w-1.5 rounded-full bg-status-normal" aria-hidden />
+      Live · synced <span className="font-mono">{label}</span>
+    </span>
   );
+}
 
+export default function Dashboard() {
+  const {
+    sensorSchema,
+    sensorData,
+    effectiveSensorData,
+    lastKnownGood,
+    latestPacket,
+    history,
+    totalRecords,
+    tickCount,
+    lastTickAt,
+  } = useSensors();
+  const { addAlert } = useNotifications();
+
+  const lastSynced = latestPacket?.ts as number | undefined;
+  // Health score, stat tiles, and the PDF report's current-score line all read from
+  // the carried-forward last-known-good values, not the raw current record — a
+  // record that's routinely missing a field shouldn't score that metric as a
+  // failure (see "Last-Known-Good Value Handling" in Questions.md).
+  const healthScore = computeHealthScore(effectiveSensorData);
+
+  const handleAlert = (opts: {
+    key: string;
+    label: string;
+    value: number | boolean;
+    severity: "warn" | "crit";
+  }) => {
+    addAlert({
+      key: opts.key,
+      label: opts.label,
+      value: opts.value,
+      severity: opts.severity,
+      transformerName: TRANSFORMER_NAME,
+      lat: TRANSFORMER_COORDS.lat,
+      lng: TRANSFORMER_COORDS.lng,
+    });
+  };
+
+  return (
+    <main className="mx-auto max-w-7xl">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">{TRANSFORMER_NAME}</h1>
+          <LivePill ts={lastSynced} />
+        </div>
+
+        <Button className="gap-2" onClick={() => generateWeeklyReport(history, TRANSFORMER_NAME, healthScore)}>
+          <Download className="h-4 w-4" />
+          Generate weekly report
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[16rem_1fr]">
+        <HealthScore score={healthScore} className="h-full" />
+
+        {sensorData ? (
+          <MetricsGrid
+            schema={sensorSchema}
+            metrics={effectiveSensorData}
+            freshness={lastKnownGood}
+            onAlert={handleAlert}
+          />
+        ) : (
+          <div className="grid place-items-center rounded-xl border bg-card p-8 text-sm text-muted-foreground">
+            Loading live sensor data...
+          </div>
+        )}
+      </div>
+
+      <SensorTrends
+        fields={["transf_temperature", "cabinetHumidity"]}
+        windowMs={ONE_WEEK_MS}
+        lineColor="teal"
+      />
+
+      <section className="mt-6">
+        <h2 className="text-lg font-semibold">Location</h2>
+        <div className="mt-3 h-80 overflow-hidden rounded-xl border">
+          <Map
+            center={TRANSFORMER_COORDS}
+            zoom={16}
+            markers={[{ id: "nust", ...TRANSFORMER_COORDS, label: TRANSFORMER_NAME }]}
+            className="h-80"
+          />
+        </div>
+      </section>
+
+      <DebugPanel
+        totalRecords={totalRecords}
+        tickCount={tickCount}
+        lastTickAt={lastTickAt}
+        bufferSize={history.length}
+        currentDecoded={sensorData}
+        lastKnownGood={lastKnownGood}
+      />
+    </main>
+  );
 }

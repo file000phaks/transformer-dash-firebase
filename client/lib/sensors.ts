@@ -127,11 +127,11 @@ export const sensorSchema = [
         "unit": "V",
         "icon": "Zap",
         "kind": "number",
-        "min": 180,
-        "max": 260,
+        "min": 3,
+        "max": 4.6,
         "normal": [
-            210,
-            240
+            3.5,
+            4.3
         ]
     },
     {

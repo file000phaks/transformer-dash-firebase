@@ -57,9 +57,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        status: {
+          normal: "hsl(var(--status-normal) / <alpha-value>)",
+          warning: "hsl(var(--status-warning) / <alpha-value>)",
+          critical: "hsl(var(--status-critical) / <alpha-value>)",
+          offline: "hsl(var(--status-offline) / <alpha-value>)",
+        },
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Ubuntu", "Cantarell", "Noto Sans", "Helvetica Neue", "Arial", "sans-serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

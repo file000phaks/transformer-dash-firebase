@@ -1,78 +1,60 @@
-import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Transformer } from "@/types/transformer";
-import { loadTransformers } from "@/lib/storage";
-import MetricsGrid from "@/components/site/MetricsGrid";
-import Map from "@/components/site/Map";
+import { ArrowLeft, RadioTower } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/state/notifications";
-import { toast } from "sonner";
-import { SensorMetric } from "@/types/SensorMetric";
-import { useSensors } from "@/hooks/useSensors";
+import Map from "@/components/site/Map";
 import useTransformers from "@/hooks/useTransformers";
-import SensorTrends from "@/components/site/SensorTrends";
+import Dashboard from "./Dashboard";
+
+// There is currently NO way to associate a loriotData reading with a specific
+// transformer — the physical device writes {ts, decoded} with no transformer
+// id field at all. Rather than fabricate that linkage, "Local" (the existing
+// NUST unit) is treated as the one hardcoded transformer wired to the real
+// live stream; every other transformer (including anything created via "Add
+// Transformer") shows the "no live data yet" state below instead.
+//
+// TODO(multi-device support): for this to generalize, each physical device
+// would need to write its transformerId alongside ts/decoded in loriotData
+// (or write to a per-transformer sub-path, e.g. loriotData/<transformerId>/...),
+// and useSensors()/this page would need to filter/query loriotData scoped to
+// the selected transformer's id instead of matching on this hardcoded name.
+// Out of scope for this round — see "Multi-Transformer Platform Restructure"
+// in Questions.md.
+const LOCAL_TRANSFORMER_NAME = "Local";
+
+function BackButton() {
+  return (
+    <Link to="/" className="inline-block">
+      <Button variant="outline" size="sm" className="mb-4 gap-1.5">
+        <ArrowLeft className="h-4 w-4" />
+        Back to Transformers
+      </Button>
+    </Link>
+  );
+}
 
 export default function TransformerDetails() {
 
   const { id } = useParams();
+  const { transformer, loading } = useTransformers( id );
 
-  const { sensorSchema, sensorData, history } = useSensors();
-  const { transformer, transformers, getTransformerById } = useTransformers( 1 );
+  if ( loading ) {
 
-  useEffect( () => {
+    return (
+      <main className="mx-auto max-w-7xl py-8">
+        <p className="text-sm text-muted-foreground">Loading transformer...</p>
+      </main>
+    );
 
-    getTransformerById( parseInt( id ) );
-
-  }, [ transformers ] )
-
-  // const { addAlert } = useNotifications();
-
-  // function handleAlert( a: {
-  //   key: string;
-  //   label: string;
-  //   value: number | boolean;
-  //   severity: "warn" | "crit";
-  // } ) {
-
-  //   const unitMap: Record<string, string> = {
-  //     temperature: "°C",
-  //     humidity: "%",
-  //     vibration: "mm/s",
-  //     oil: "%",
-  //     voltage: "V",
-  //     current: "A",
-  //   };
-
-  //   const unit = unitMap[ a.key ] || "";
-
-  //   const msg =
-
-  //     typeof a.value === "number"
-  //       ? `${a.label} reading ${a.value}${unit} is outside normal range.`
-  //       : `${a.label} event detected.`;
-  //   addAlert( {
-  //     ...a,
-  //     transformerId: String( transformer?.id ),
-  //     transformerName: transformer?.name,
-  //     lat: transformer?.lat,
-  //     lng: transformer?.lng,
-  //     message: msg,
-  //   } );
-
-  //   toast( `${a.label} ${a.severity === "crit" ? "Critical" : "Warning"}`, {
-  //     description: `${transformer?.name ?? "Unknown"} • ${msg}`,
-  //   } );
-
-  // }
+  }
 
   if ( !transformer ) {
 
     return (
 
-      <main className="container mx-auto py-8">
+      <main className="mx-auto max-w-7xl py-8">
         <p className="text-sm text-muted-foreground">Transformer not found.</p>
         <Link
-          to="/transformers"
+          to="/"
           className="mt-3 inline-block text-primary underline"
         >
           Back to Transformers
@@ -81,76 +63,62 @@ export default function TransformerDetails() {
     );
   }
 
+  // The one transformer with a real wired data source — reuse the existing
+  // dashboard layout (health score, metrics grid, PDF report, sensor trends,
+  // anomaly indicator, per-field freshness) exactly as it already works.
+  if ( transformer.name === LOCAL_TRANSFORMER_NAME ) {
+
+    return (
+      <div>
+        <div className="mx-auto max-w-7xl">
+          <BackButton />
+        </div>
+        <Dashboard />
+      </div>
+    );
+
+  }
+
   return (
 
-    <main className="container mx-auto grid gap-6 py-8 xl:grid-cols-2">
+    <main className="mx-auto max-w-7xl">
 
-      <div className="xl:col-span-2">
+      <BackButton />
 
-        <div className="flex items-center justify-between">
-
-          <h1 className="text-2xl font-bold tracking-tight">  {transformer.name}  </h1>
-
-          <Link to="/transformers">
-            <Button variant="outline">Back</Button>
-          </Link>
-
-        </div>
-
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">{transformer.name}</h1>
+        <p className="mt-1 font-mono text-sm text-muted-foreground">
           {transformer.lat.toFixed( 5 )}, {transformer.lng.toFixed( 5 )}
         </p>
+      </div>
 
-        <div className="mt-4 h-64 overflow-hidden rounded-xl border">
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-card p-10 text-center">
+        <RadioTower className="h-8 w-8 text-muted-foreground" />
+        <p className="font-medium">No live data yet — awaiting device connection</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          This transformer isn't linked to a reporting device yet. Once its hardware
+          starts sending readings, live telemetry, trends, and health scoring will
+          appear here automatically.
+        </p>
+      </div>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Location</h2>
+        <div className="mt-3 h-72 overflow-hidden rounded-xl border">
           <Map
             center={{ lat: transformer.lat, lng: transformer.lng }}
             markers={[
               {
-                id: String( transformer.id ),
+                id: transformer.id,
                 lat: transformer.lat,
                 lng: transformer.lng,
+                label: transformer.name,
               },
             ]}
-            className="h-64"
+            className="h-72"
           />
         </div>
-
-        <aside className="grid gap-3">
-          <div className="rounded-xl border bg-card p-6 shadow-sm mt-6">
-            <p className="text-sm font-semibold">Status</p>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              Operating Normally
-            </p>
-
-          </div>
-        </aside>
-
-        <h2 className="mt-6 text-lg font-semibold">Live Telemetry</h2>
-
-        {
-          sensorData ?
-            (
-              <MetricsGrid
-                className="mt-3"
-                // onAlert={handleAlert}
-                onAlert={() => { }}
-                schema={sensorSchema}
-                metrics={sensorData}
-
-              />
-            )
-            :
-            (
-              <p>Loading live sensor data...</p>
-            )
-        }
-
-        {
-          <SensorTrends />
-        }
-
-      </div>
+      </section>
 
     </main>
 

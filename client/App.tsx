@@ -15,6 +15,7 @@ import Sensors from "./pages/Sensors";
 import TransformerDetails from "./pages/TransformerDetails";
 import NotFound from "./pages/NotFound";
 import AlertDetails from "./pages/AlertDetails";
+import FleetMap from "./pages/FleetMap";
 import { NotificationsProvider } from "@/state/notifications";
 
 const queryClient = new QueryClient();
@@ -29,12 +30,15 @@ const App = () => (
           <NotificationsProvider>
             <Layout>
               <Routes>
+                <Route path="/" element={<Transformers />} />
                 <Route
-                  path="/"
-                  element={<Navigate to="/dashboard" replace />}
+                  path="/dashboard"
+                  element={<Navigate to="/" replace />}
                 />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/transformers" element={<Transformers />} />
+                <Route
+                  path="/transformers"
+                  element={<Navigate to="/" replace />}
+                />
                 <Route
                   path="/transformers/:id"
                   element={<TransformerDetails />}
@@ -42,6 +46,7 @@ const App = () => (
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/alerts/:id" element={<AlertDetails />} />
                 <Route path="/sensors" element={<Sensors />} />
+                <Route path="/map" element={<FleetMap />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>

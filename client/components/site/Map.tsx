@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import React from "react";
 
@@ -80,25 +80,17 @@ export default function Map( {
 
             <ClickCapture onSelect={onSelect} />
             {markers.map( ( m ) => (
-              <Marker key={m.id} position={[ m.lat, m.lng ]} icon={icon} />
+              <Marker key={m.id} position={[ m.lat, m.lng ]} icon={icon}>
+                {m.label && <Popup>{m.label}</Popup>}
+              </Marker>
             ) )}
 
           </MapContainer>
         ) :
         (
-          <div 
-            style={{
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "#f9f9f",
-            }}
-          >
-
-            <p>Map not available offline</p>
-            <p style={{ fontSize: "0.9em", color: "#666" }}>
+          <div className="flex h-full flex-col items-center justify-center gap-1 rounded-xl bg-muted text-center">
+            <p className="text-sm font-medium">Map not available offline</p>
+            <p className="text-xs text-muted-foreground">
               Please connect to the internet to select a location
             </p>
           </div>

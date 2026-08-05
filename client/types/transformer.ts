@@ -1,5 +1,5 @@
 export type Transformer = {
-  id: number;
+  id: string;
   name: string;
   lat: number;
   lng: number;

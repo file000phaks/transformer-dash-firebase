@@ -23,7 +23,7 @@ export default function NotificationBell() {
 
         <Bell className="h-4 w-4" />
         {count > 0 && (
-          <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+          <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-status-critical text-[10px] font-semibold text-white">
             {Math.min( 9, count )}
           </span>
         )}
