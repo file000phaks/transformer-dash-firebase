@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "node server/server.cjs",
-    "dev:all": "concurrently \"npm:dev\" \"npm:dev:server\"",
+    "dev:all": "concurrently \"vite\" \"node server/server.cjs\"",
     "build": "npm run build:client",
     "build:client": "vite build",
     "test": "vitest --run",

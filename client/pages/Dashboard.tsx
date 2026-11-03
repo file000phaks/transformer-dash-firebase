@@ -6,7 +6,6 @@ import MetricsGrid from "@/components/site/MetricsGrid";
 import HealthScore from "@/components/site/HealthScore";
 import SensorTrends from "@/components/site/SensorTrends";
 import Map from "@/components/site/Map";
-import DebugPanel from "@/components/site/DebugPanel";
 import { useNotifications } from "@/state/notifications";
 import { computeHealthScore } from "@/lib/status";
 import { generateWeeklyReport } from "@/lib/pdfReport";
@@ -47,9 +46,6 @@ export default function Dashboard() {
     lastKnownGood,
     latestPacket,
     history,
-    totalRecords,
-    tickCount,
-    lastTickAt,
   } = useSensors();
   const { addAlert } = useNotifications();
 
@@ -125,15 +121,6 @@ export default function Dashboard() {
           />
         </div>
       </section>
-
-      <DebugPanel
-        totalRecords={totalRecords}
-        tickCount={tickCount}
-        lastTickAt={lastTickAt}
-        bufferSize={history.length}
-        currentDecoded={sensorData}
-        lastKnownGood={lastKnownGood}
-      />
     </main>
   );
 }

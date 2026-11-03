@@ -45,5 +45,11 @@ export function formatShortAge(ts: number | null | undefined): string {
   if (!ts) return "—";
 
   const seconds = Math.max(0, Math.floor((Date.now() - ts) / 1000));
-  return seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }

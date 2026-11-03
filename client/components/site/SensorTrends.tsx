@@ -77,7 +77,7 @@ function faultAwareYBounds( cleanValues: number[] ): { min: number; max: number 
 
 // Brand teal, used as the line stroke when `lineColor="teal"` — the area fill
 // still tints by status color so the chart keeps conveying health at a glance.
-const TEAL_HEX = { light: "#0F766E", dark: "#14B8A6" };
+const TEAL_HEX = { light: "#2563EB", dark: "#3B82F6" };
 
 export default function SensorTrends( {
     fields,
@@ -98,15 +98,15 @@ export default function SensorTrends( {
     const tealColor = TEAL_HEX[ isDark ? "dark" : "light" ];
     const charts = fields ? CHARTS.filter( ( c ) => fields.includes( c.field ) ) : CHARTS;
 
-    const gridColor = isDark ? "rgba(250,250,248,0.08)" : "rgba(28,25,23,0.08)";
-    const tickColor = isDark ? "rgba(168,162,158,0.9)" : "rgba(120,113,108,0.9)";
+    const gridColor = isDark ? "rgba(148, 163, 184, 0.12)" : "rgba(15, 23, 42, 0.08)";
+    const tickColor = isDark ? "rgba(148, 163, 184, 0.85)" : "rgba(100, 116, 139, 0.9)";
 
     const baseOptions = useMemo(
         () => ( {
-            backgroundColor: isDark ? "#262220" : "#FFFFFF",
-            titleColor: isDark ? "#FAFAF8" : "#1C1917",
-            bodyColor: isDark ? "#FAFAF8" : "#1C1917",
-            borderColor: isDark ? "#3A3532" : "#E7E5E4",
+            backgroundColor: isDark ? "#0c1427" : "#FFFFFF",
+            titleColor: isDark ? "#F8FAFC" : "#0F172A",
+            bodyColor: isDark ? "#F8FAFC" : "#0F172A",
+            borderColor: isDark ? "#1E293B" : "#E2E8F0",
         } ),
         [ isDark ],
     );

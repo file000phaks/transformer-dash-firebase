@@ -11,11 +11,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SensorMetric } from "@/types/SensorMetric";
-import { SensorData } from "@shared/api";
-import { firebaseToLocalMap, localToFirebaseMap } from "@/lib/sensors";
-import { coerceBoolean, isImplausibleReading, metricStatus, STATUS_META, StatusLevel } from "@/lib/status";
+import { localToFirebaseMap } from "@/lib/sensors";
+import { coerceBoolean, isImplausibleReading, metricStatus, StatusLevel } from "@/lib/status";
 import { formatShortAge } from "@/lib/time";
 import type { LastKnownGood } from "@/hooks/useSensors";
+import StatusPill from "./StatusPill";
 
 const iconMap: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   Activity,
@@ -25,7 +25,7 @@ const iconMap: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>
   Thermometer,
   Waves,
   Zap,
-}
+};
 
 // Top stat-tile row order, per the design brief's 9 named live sensor values
 // (local schema keys).
@@ -49,10 +49,8 @@ export default function MetricsGrid( {
   stale = false,
   freshness,
 }: {
-  // Despite the name, this is a keyed decoded-reading object (e.g. { cabinetTemp: 24.1, ... }),
-  // never an array — `metrics[localToFirebaseMap[m.key]]` below always did object-key access.
-  // Callers are expected to pass last-known-good (carried-forward) values here, not the raw
-  // current record, so a tile keeps its last real reading through a record that's missing it.
+  // Keyed decoded-reading object (e.g. { cabinetTemp: 24.1, ... }).
+  // Callers are expected to pass last-known-good values here.
   metrics?: Record<string, number | boolean>;
   schema?: any[];
   className?: string;
@@ -63,20 +61,13 @@ export default function MetricsGrid( {
     severity: "warn" | "crit";
   } ) => void;
   stale?: boolean;
-  // Keyed by Firebase field name (e.g. "cabinetTemp"), matching `metrics`'s own keys —
-  // when each field's value in `metrics` was last actually updated. Optional so existing
-  // callers without per-field freshness (if any) keep working unchanged.
   freshness?: LastKnownGood;
 } ) {
-
   const [ values, setValues ] = useState<Record<string, number | boolean>>( {} );
   const triggeredRef = useRef<Record<string, boolean>>( {} );
+  const [ sensorValues, setSensorValues ] = useState<SensorMetric[]>( [] );
 
-  const [ sensorValues, setSensorValues ] = useState<SensorMetric[]>( [] )
-
-  // One shared 1s re-render clock for the whole grid, rather than one interval per
-  // tile, so every "last updated Xs ago" caption stays live between the underlying
-  // 5s data ticks without redundant timers.
+  // Shared 1s re-render clock for the whole grid
   const [ , forceRerender ] = useState( 0 );
   useEffect( () => {
     const id = setInterval( () => forceRerender( ( t ) => t + 1 ), 1000 );
@@ -85,36 +76,24 @@ export default function MetricsGrid( {
 
   // Initialize values
   useEffect( () => {
-
     if ( metrics && schema ) {
-
       const init: Record<string, number | boolean> = {};
-
       const formattedMetrics: SensorMetric[] = schema.map( item => ( {
         ...item,
         icon: iconMap[ item.icon ]
-      } ) )
+      } ) );
 
-
-      // For real data, get firebase data
       for ( const m of formattedMetrics ) {
-
         init[ m.key ] = metrics[ localToFirebaseMap[ m.key ] ];
-
-
       }
 
       setSensorValues( formattedMetrics );
-
       setValues( init );
-
     }
+  }, [ metrics, schema ] );
 
-  }, [ metrics ] );
-
-  // After values update, compute alerts and notify parent (async to avoid render-phase updates)
+  // After values update, compute alerts and notify parent
   useEffect( () => {
-
     if ( !onAlert ) return;
 
     const notify = ( payload: {
@@ -129,16 +108,13 @@ export default function MetricsGrid( {
     const flags = { ...triggeredRef.current };
 
     for ( const m of sensorValues ) {
-
       const v = values[ m.key ];
 
       if ( m.kind === "number" && typeof v === "number" && m.normal ) {
-
         const [ lo, hi ] = m.normal;
         const out = v < lo || v > hi;
 
         if ( out && !flags[ m.key ] ) {
-
           flags[ m.key ] = true;
           notify( {
             key: m.key,
@@ -147,42 +123,24 @@ export default function MetricsGrid( {
             severity: v > hi ? "crit" : "warn",
           } );
         }
-
         if ( !out ) flags[ m.key ] = false;
-
       }
 
       if ( m.kind === "boolean" ) {
-
-        // door/PIR arrive from Firebase as numeric 0|1, not native true/false —
-        // `v === true`/`v === false` never matched a real reading, so these
-        // alerts silently never fired. coerceBoolean() treats either
-        // representation the same; undefined (missing) leaves flags untouched.
         const bool = coerceBoolean( v );
-
         if ( bool === true && !flags[ m.key ] ) {
-
-          // Fire on true only; auto-reset on next false
           flags[ m.key ] = true;
           notify( { key: m.key, label: m.label, value: true, severity: "crit" } );
-
         } else if ( bool === false ) {
-
           flags[ m.key ] = false;
-
         }
-
       }
-
     }
 
     triggeredRef.current = flags;
-
   }, [ values, sensorValues, onAlert ] );
 
-
   const cards = useMemo(
-
     () => sensorValues
       .map( ( m ) => {
         const fbKey = localToFirebaseMap[ m.key ];
@@ -195,43 +153,41 @@ export default function MetricsGrid( {
       } )
       .filter( ( { m } ) => TILE_ORDER.includes( m.key ) )
       .sort( ( a, b ) => TILE_ORDER.indexOf( a.m.key ) - TILE_ORDER.indexOf( b.m.key ) ),
-
     [ sensorValues, values, freshness ],
-
   );
 
-  if ( !sensorValues )
-
+  if ( !sensorValues.length ) {
     return (
-      <div>
-        <p>Loading sensor data...</p>
+      <div className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">
+        Loading sensor data...
       </div>
-    )
+    );
+  }
 
   return (
-
     <div
       className={cn(
-        "grid grid-cols-2 gap-4 lg:grid-cols-4",
+        "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4",
         className,
       )}
     >
-      {
-        cards.map( ( { m, v, updatedAt, isAnomalous } ) => (
-          <MetricCard key={m.key} metric={m} value={v} stale={stale} updatedAt={updatedAt} isAnomalous={isAnomalous} />
-        ) )
-      }
+      {cards.map( ( { m, v, updatedAt, isAnomalous } ) => (
+        <MetricCard
+          key={m.key}
+          metric={m}
+          value={v}
+          stale={stale}
+          updatedAt={updatedAt}
+          isAnomalous={isAnomalous}
+        />
+      ) )}
     </div>
-
   );
 }
 
 function statusFor( metric: SensorMetric, value: number | boolean | undefined, stale: boolean ): StatusLevel {
-
   if ( stale ) return "offline";
-
   return metricStatus( value, metric );
-
 }
 
 function MetricCard( {
@@ -247,86 +203,100 @@ function MetricCard( {
   updatedAt?: number;
   isAnomalous?: boolean;
 } ) {
-
   const Icon = metric.icon;
-
   const isBool = metric.kind === "boolean";
-
   const status = statusFor( metric, value, stale );
-  const meta = STATUS_META[ status ];
 
-  // ~1-2% of real records are missing individual `decoded` fields (confirmed
-  // live, see Questions.md "Firebase Schema Hardening"). A missing boolean
-  // reading is `undefined`/`null`, not `0`/`false` — door/PIR arrive from
-  // Firebase as numeric 0|1, not native JS booleans, so this must coerce
-  // rather than require `typeof value === "boolean"` (see "Boolean Field Bug
-  // Fix" in Questions.md — that stricter check never matched a real reading).
   const boolValue = isBool ? coerceBoolean( value ) : undefined;
-  const text = isBool
-    ? boolValue === undefined
-      ? "—"
-      : boolValue
-        ? "TRIGGERED"
-        : "CLEAR"
-    : typeof value === "number"
-      ? value.toFixed( 1 )
-      : "—";
+
+  let displayValue: string;
+  let isAlertState = false;
+
+  if ( isBool ) {
+    if ( boolValue === undefined ) {
+      displayValue = "—";
+    } else if ( boolValue ) {
+      isAlertState = true;
+      displayValue = metric.key === "door" ? "Open" : metric.key === "intruder" ? "Detected" : "Triggered";
+    } else {
+      displayValue = metric.key === "door" ? "Closed" : metric.key === "intruder" ? "Clear" : "Normal";
+    }
+  } else if ( typeof value === "number" ) {
+    displayValue = value.toFixed( 1 );
+    if ( status === "critical" || status === "warning" ) {
+      isAlertState = true;
+    }
+  } else {
+    displayValue = "—";
+  }
+
+  // Soft icon tone styling based on status
+  const iconTone =
+    status === "critical"
+      ? "bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400"
+      : status === "warning"
+        ? "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
+        : status === "normal"
+          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
+          : "bg-muted text-muted-foreground";
 
   return (
-
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-card p-4 pl-5 shadow-sm",
+        "group relative flex flex-col justify-between rounded-2xl border bg-card p-4 sm:p-5 shadow-xs transition-all duration-200 hover:shadow-sm hover:border-slate-300 dark:hover:border-slate-700/80",
         isAnomalous && "animate-anomaly-pulse",
       )}
     >
-
-      <span className={cn( "absolute inset-y-0 left-0 w-1", meta.dot )} aria-hidden />
-
-      <div className="flex items-start justify-between gap-2">
-
-        <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
-          <Icon className="h-4 w-4 shrink-0" />
-          <span className="truncate text-xs font-medium uppercase tracking-wide">
-            {metric.label}
-          </span>
+      {/* Top Header: Normal case sensor label and soft icon container */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-xs font-semibold text-muted-foreground" title={metric.label}>
+          {metric.label}
+        </span>
+        <div className={cn( "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105", iconTone )}>
+          <Icon className="h-4 w-4" />
         </div>
-
-        <span className={cn( "h-2 w-2 shrink-0 rounded-full", meta.dot )} aria-hidden />
-
       </div>
 
-      <p className="mt-3 font-mono text-2xl font-semibold leading-tight tracking-tight">
-        {text}
-        {!isBool && metric.unit && (
-          <span className="ml-1 text-sm font-normal text-muted-foreground">{metric.unit}</span>
+      {/* Main Metric Value */}
+      <div className="my-3">
+        <div className="flex items-baseline gap-1.5">
+          <span
+            className={cn(
+              "font-mono font-bold tracking-tight",
+              isBool ? "text-xl font-semibold" : "text-2xl sm:text-3xl",
+              isAlertState ? "text-status-critical" : "text-foreground",
+            )}
+          >
+            {displayValue}
+          </span>
+          {!isBool && metric.unit && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {metric.unit}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Footer: Compact status pill and relative age */}
+      <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-border/50">
+        <StatusPill status={status} size="sm" />
+
+        {updatedAt ? (
+          <span className="text-[11px] font-mono text-muted-foreground">
+            {formatShortAge( updatedAt )}
+          </span>
+        ) : (
+          <span className="text-[11px] font-mono text-muted-foreground/60">—</span>
         )}
-      </p>
+      </div>
 
-      <p className={cn( "mt-1 text-xs font-medium", meta.text )}>{meta.label}</p>
-
-      {/* Per-field freshness — a normal live-dashboard caption, not a stale-data
-          alarm. Only rendered once this field has actually had a value at least
-          once (per-field "—" already covers the never-had-a-value case above). */}
-      {updatedAt && (
-        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-          Updated {formatShortAge( updatedAt )}
-        </p>
-      )}
-
-      {/* The pulse above is the anomaly indicator itself; this caption just explains
-          why it's pulsing — layered on top of, not instead of, the normal/warning/
-          critical status label above, so a tile can read e.g. "Critical" AND
-          "Anomalous reading" at the same time. */}
+      {/* Anomaly warning caption if sensor value is implausible */}
       {isAnomalous && (
-        <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-status-critical">
+        <p className="mt-2 flex items-center gap-1 rounded-md bg-status-critical/10 px-2 py-1 text-[11px] font-medium text-status-critical ring-1 ring-inset ring-status-critical/20">
           <AlertTriangle className="h-3 w-3 shrink-0" />
           Anomalous reading
         </p>
       )}
-
     </div>
-
   );
-
 }

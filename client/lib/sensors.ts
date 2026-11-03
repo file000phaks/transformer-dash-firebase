@@ -26,22 +26,19 @@ export const sensors = [
 ]
 
 export const firebaseToLocalMap = {
-
     cabinetHumidity: "cab_humidity",
     cabinetTemp: "cab_temperature",
     currentSensor: "current",
     doorSensor: "door",
     oilLevelSensor: "oil",
     pirSensor: "intruder",
+    pirSensor2: "intruder",
     transf_temperature: "trans_temperature",
-    //   ts: number,
     vibrationSensor: "vibration",
     voltSensor: "voltage",
-
 }
 
 export const localToFirebaseMap = {
-
     "cab_humidity": "cabinetHumidity",
     "cab_temperature": "cabinetTemp",
     "current": "currentSensor",
@@ -49,10 +46,8 @@ export const localToFirebaseMap = {
     "oil": "oilLevelSensor",
     "intruder": "pirSensor",
     "trans_temperature": "transf_temperature",
-    //   ts number,
     "vibration": "vibrationSensor",
     "voltage": "voltSensor",
-
 }
 
 export const sensorSchema = [
