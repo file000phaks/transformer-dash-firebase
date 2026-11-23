@@ -48,6 +48,8 @@ export default function MetricsGrid( {
   onAlert,
   stale = false,
   freshness,
+  armed = true,
+  mode = "normal",
 }: {
   // Keyed decoded-reading object (e.g. { cabinetTemp: 24.1, ... }).
   // Callers are expected to pass last-known-good values here.
@@ -62,6 +64,8 @@ export default function MetricsGrid( {
   } ) => void;
   stale?: boolean;
   freshness?: LastKnownGood;
+  armed?: boolean;
+  mode?: "normal" | "maintenance";
 } ) {
   const [ values, setValues ] = useState<Record<string, number | boolean>>( {} );
   const triggeredRef = useRef<Record<string, boolean>>( {} );
@@ -105,10 +109,19 @@ export default function MetricsGrid( {
       Promise.resolve().then( () => onAlert( payload ) );
     };
 
+    const isMaintenance = mode === "maintenance";
+    const isSecuritySensor = ( key: string ) => key === "door" || key === "intruder" || key === "vibration";
+
     const flags = { ...triggeredRef.current };
 
     for ( const m of sensorValues ) {
       const v = values[ m.key ];
+
+      // Suppress all alerts during maintenance mode
+      if ( isMaintenance ) continue;
+
+      // Suppress security alerts if transformer is disarmed
+      if ( !armed && isSecuritySensor( m.key ) ) continue;
 
       if ( m.kind === "number" && typeof v === "number" && m.normal ) {
         const [ lo, hi ] = m.normal;
@@ -138,7 +151,7 @@ export default function MetricsGrid( {
     }
 
     triggeredRef.current = flags;
-  }, [ values, sensorValues, onAlert ] );
+  }, [ values, sensorValues, onAlert, armed, mode ] );
 
   const cards = useMemo(
     () => sensorValues
@@ -217,9 +230,9 @@ function MetricCard( {
       displayValue = "—";
     } else if ( boolValue ) {
       isAlertState = true;
-      displayValue = metric.key === "door" ? "Open" : metric.key === "intruder" ? "Detected" : "Triggered";
+      displayValue = metric.key === "door" ? "Open" : metric.key === "intruder" ? "Detected" : metric.key === "vibration" ? "Detected" : "Triggered";
     } else {
-      displayValue = metric.key === "door" ? "Closed" : metric.key === "intruder" ? "Clear" : "Normal";
+      displayValue = metric.key === "door" ? "Closed" : metric.key === "intruder" ? "Clear" : metric.key === "vibration" ? "Clear" : "Normal";
     }
   } else if ( typeof value === "number" ) {
     displayValue = value.toFixed( 1 );

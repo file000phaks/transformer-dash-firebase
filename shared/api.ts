@@ -5,28 +5,34 @@
  */
 
 export type Transformer = {
-  id: number;
+  id: string | number;
   name: string;
+  city?: string;
+  suburb?: string;
+  eui?: string;
+  type?: string;
   lat: number;
   lng: number;
+  armed?: boolean;
+  mode?: "normal" | "maintenance";
 };
 
 export type SensorScheme = {
-  "key": string,
-  "label": string,
-  "unit"?: string,
-  "icon": string,
-  "kind": "number" | "boolean",
-  "min"?: number,
-  "max"?: number,
-  "normal"?: [ number, number ],
+  "key": string;
+  "label": string;
+  "unit"?: string;
+  "icon": string;
+  "kind": "number" | "boolean";
+  "min"?: number;
+  "max"?: number;
+  "normal"?: [ number, number ];
   format?: ( v: number | boolean ) => string;
-}
+};
 
 export type Sensor = {
-  "name": string,
-  "desc": string
-}
+  "name": string;
+  "desc": string;
+};
 
 export type SensorData = {
   cabinetHumidity: number;
@@ -39,4 +45,8 @@ export type SensorData = {
   ts: number;
   vibrationSensor: 0 | 1;
   voltSensor: number;
-}
+  eui?: string;
+  freq?: number;
+  rssi?: number;
+  snr?: number;
+};

@@ -23,7 +23,7 @@ export const sensors = [
         "name": "PIR Motion Sensor",
         "desc": "Intruder motion detection near equipment."
     }
-]
+];
 
 export const firebaseToLocalMap = {
     cabinetHumidity: "cab_humidity",
@@ -36,7 +36,7 @@ export const firebaseToLocalMap = {
     transf_temperature: "trans_temperature",
     vibrationSensor: "vibration",
     voltSensor: "voltage",
-}
+};
 
 export const localToFirebaseMap = {
     "cab_humidity": "cabinetHumidity",
@@ -48,7 +48,7 @@ export const localToFirebaseMap = {
     "trans_temperature": "transf_temperature",
     "vibration": "vibrationSensor",
     "voltage": "voltSensor",
-}
+};
 
 export const sensorSchema = [
     {
@@ -93,15 +93,8 @@ export const sensorSchema = [
     {
         "key": "vibration",
         "label": "Vibration",
-        "unit": "mm/s",
         "icon": "Waves",
-        "kind": "number",
-        "min": 0,
-        "max": 25,
-        "normal": [
-            0,
-            8
-        ]
+        "kind": "boolean"
     },
     {
         "key": "oil",
@@ -154,4 +147,4 @@ export const sensorSchema = [
         "icon": "ShieldAlert",
         "kind": "boolean"
     }
-]
+];
