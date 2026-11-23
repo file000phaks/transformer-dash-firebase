@@ -2,6 +2,7 @@ import { ref, onValue, push, remove, update } from "firebase/database";
 import { database } from "@/lib/firebase.js";
 import { Transformer } from "@/types/transformer";
 import { useEffect, useMemo, useState } from "react";
+import { fallbackEuiFromKey, generateRandomEui } from "@/lib/eui";
 
 export const useTransformers = ( id?: string ) => {
 
@@ -26,7 +27,7 @@ export const useTransformers = ( id?: string ) => {
                     name: value.name || `Transformer ${key.slice(-4)}`,
                     city: value.city || "Bulawayo",
                     suburb: value.suburb || "CBD",
-                    eui: value.eui || ( value.name === "Local" ? "wwwwwwwwwwwwwww" : `eui-${key.slice(-8)}` ),
+                    eui: value.eui || ( value.name === "Local" ? "24E124621F404022" : fallbackEuiFromKey( key ) ),
                     type: value.type || "GMT",
                     lat: typeof value.lat === "number" ? value.lat : Number( value.lat ) || -20.1626,
                     lng: typeof value.lng === "number" ? value.lng : Number( value.lng ) || 28.6417,
@@ -66,7 +67,7 @@ export const useTransformers = ( id?: string ) => {
             name: data.name.trim(),
             city: ( data.city || "Bulawayo" ).trim(),
             suburb: ( data.suburb || "CBD" ).trim(),
-            eui: ( data.eui || "wwwwwwwwwwwwwww" ).trim(),
+            eui: ( data.eui || generateRandomEui() ).trim(),
             type: ( data.type || "GMT" ).trim(),
             lat: data.lat,
             lng: data.lng,

@@ -17,6 +17,7 @@ import {
   Cpu,
   MapPin,
   Building,
+  RefreshCw,
 } from "lucide-react";
 import Map, { MapMarker } from "@/components/site/Map";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
 import useTransformers from "@/hooks/useTransformers";
 import { useSensors } from "@/hooks/useSensors";
 import { computePacketStatus } from "@/lib/status";
+import { generateRandomEui } from "@/lib/eui";
 import { formatRelativeTime } from "@/lib/time";
 import StatusPill from "@/components/site/StatusPill";
 import { cn } from "@/lib/utils";
@@ -47,16 +49,16 @@ export default function TransformersPage() {
   const [ open, setOpen ] = useState( false );
   const [ search, setSearch ] = useState( "" );
   const [ submitting, setSubmitting ] = useState( false );
-  const [ draft, setDraft ] = useState( {
+  const [ draft, setDraft ] = useState( () => ( {
     name: "",
     city: "Bulawayo",
     suburb: "CBD",
-    eui: "wwwwwwwwwwwwwww",
+    eui: generateRandomEui(),
     type: "GMT",
     armed: true,
     mode: "normal" as "normal" | "maintenance",
     ...DEFAULT_DRAFT_COORDS,
-  } );
+  } ) );
 
   const navigate = useNavigate();
 
@@ -96,7 +98,7 @@ export default function TransformersPage() {
         name: draft.name.trim(),
         city: draft.city.trim() || "Bulawayo",
         suburb: draft.suburb.trim() || "CBD",
-        eui: draft.eui.trim() || "wwwwwwwwwwwwwww",
+        eui: draft.eui.trim() || generateRandomEui(),
         type: draft.type.trim() || "GMT",
         lat: draft.lat,
         lng: draft.lng,
@@ -107,7 +109,7 @@ export default function TransformersPage() {
         name: "",
         city: "Bulawayo",
         suburb: "CBD",
-        eui: "wwwwwwwwwwwwwww",
+        eui: generateRandomEui(),
         type: "GMT",
         armed: true,
         mode: "normal",
@@ -285,10 +287,20 @@ export default function TransformersPage() {
                   </div>
 
                   <div className="grid gap-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">Device EUI (LoRaWAN)</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-muted-foreground">Device EUI (LoRaWAN)</label>
+                      <button
+                        type="button"
+                        onClick={() => setDraft( ( d ) => ( { ...d, eui: generateRandomEui() } ) )}
+                        className="flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-600 transition"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Generate Random
+                      </button>
+                    </div>
                     <input
                       className="h-9 rounded-lg border bg-background px-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g. wwwwwwwwwwwwwww"
+                      placeholder="e.g. 24E124621F404022"
                       value={draft.eui}
                       onChange={( e ) => setDraft( { ...draft, eui: e.target.value } )}
                     />

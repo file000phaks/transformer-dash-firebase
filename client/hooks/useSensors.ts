@@ -87,7 +87,8 @@ export const useSensors = ( targetEui?: string ) => {
         return String(pEui).trim().toLowerCase() === targetEui.trim().toLowerCase();
       }
       // If packet has no eui (legacy test records in loriotData), associate with default Local unit
-      return targetEui === "wwwwwwwwwwwwwww" || targetEui.toLowerCase() === "local";
+      const normalized = targetEui.trim().toLowerCase();
+      return normalized === "local" || normalized === "24e124621f404022" || normalized === "wwwwwwwwwwwwwww";
     }
 
     function commitBuffer() {

@@ -66,7 +66,7 @@ export default function Dashboard( {
 } ) {
   const name = transformer?.name || DEFAULT_TRANSFORMER_NAME;
   const coords = transformer ? { lat: transformer.lat, lng: transformer.lng } : DEFAULT_COORDS;
-  const eui = transformer?.eui || "wwwwwwwwwwwwwww";
+  const eui = transformer?.eui || "24E124621F404022";
   const city = transformer?.city || "Bulawayo";
   const suburb = transformer?.suburb || "NUST";
   const type = transformer?.type || "GMT";
